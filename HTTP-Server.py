@@ -45,6 +45,7 @@ def completer(text, state):
 
 readline.set_completer(completer)
 readline.parse_and_bind("tab: complete")
+disable_pw = ("-npw" in argv)
 
 class MyServer(BaseHTTPRequestHandler):
     def _set_headers(self, code=200):
@@ -188,7 +189,10 @@ class MyServer(BaseHTTPRequestHandler):
                                 if not sudo:
                                     old_cmd = ' '.join(args[1:])
                                     print (colored(f"[sudo] password for {str(whoami).rstrip()}:\n","red"))
-                                    sudo_pass = pwinput.pwinput(prompt=(cinput + "\001\033[0m\002"))
+                                    if disable_pw:
+                                        sudo_pass = input(cinput + "\001\033[0m\002")
+                                    else:
+                                        sudo_pass = pwinput.pwinput(prompt=(cinput + "\001\033[0m\002"))
                                     command = str("printf '" + sudo_pass + "'" + " | " + "sudo -S " + old_cmd)
                                     wait_for_cmd = True ; sudo = True
                                     if "su" in args:
