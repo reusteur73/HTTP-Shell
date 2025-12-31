@@ -7,11 +7,10 @@ This shell is not fully interactive, but displays any errors on screen (both Win
 
 
 # Requirements
-- Python 3 for Server
+- Python 3 for Server (or Docker - see Usage section)
 - Install requirements.txt
 - Bash for Linux Client
 - PowerShell 2.0 or greater for Windows Client
-
 
 # Download
 It is recommended to clone the complete repository or download the zip file.
@@ -45,6 +44,12 @@ git clone https://github.com/JoelGMSec/HTTP-Shell
 
 [!] Usage: .\HTTP-Client.ps1 -c [HOST:PORT] -s [SLEEP] (optional)
 
+```
+
+If you wish to run server in a Docker container:
+```
+docker build -t http-shell https://github.com/JoelGMSec/HTTP-Shell.git#main
+docker run -it --rm -p 8080:8080 --name http-shell http-shell
 ```
 
 ### The detailed guide of use can be found at the following link:

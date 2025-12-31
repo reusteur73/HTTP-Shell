@@ -18,7 +18,7 @@ fi
 
 # Functions
 GetEnv() {
-   usr="$(whoami | tr "[:upper:]" "[:lower:]")@$(hostname | tr "[:upper:]" "[:lower:]")"
+   usr="$(whoami | tr "[:upper:]" "[:lower:]")@$(uname -n | tr "[:upper:]" "[:lower:]")"
    pwd="$pwdnew"
    echo "$usr!$pwd"
 }
