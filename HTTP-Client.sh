@@ -23,7 +23,7 @@ fi
 
 # Functions
 GetEnv() {
-   usr="$(id -un | tr "[:upper:]" "[:lower:]")@$(cat /etc/hostname | tr "[:upper:]" "[:lower:]")"
+   usr="$(id -un | tr "[:upper:]" "[:lower:]")@$(uci get system.@system[0].hostname | tr "[:upper:]" "[:lower:]")"
    pwd="$pwdnew"
    echo "$usr!$pwd"
 }
