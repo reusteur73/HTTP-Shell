@@ -23,7 +23,7 @@ fi
 
 # Functions
 GetEnv() {
-   usr="$(whoami | tr "[:upper:]" "[:lower:]")@$(cat /etc/hostname | tr "[:upper:]" "[:lower:]")"
+   usr="$(id -un | tr "[:upper:]" "[:lower:]")@$(cat /etc/hostname | tr "[:upper:]" "[:lower:]")"
    pwd="$pwdnew"
    echo "$usr!$pwd"
 }
